@@ -20,7 +20,15 @@ export default function AgentsChatPage() {
   const workspaceId = 'default_workspace';
 
   useEffect(() => {
-    const wsUrl = `ws://localhost/api/chat/ws/${workspaceId}`;
+    const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1] || localStorage.getItem('token');
+    
+    if (!token) {
+        console.error("No authentication token found");
+        return;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${wsProtocol}//${window.location.host}/api/chat/ws/${workspaceId}?token=${token}`;
     ws.current = new WebSocket(wsUrl);
 
     ws.current.onopen = () => setIsConnected(true);

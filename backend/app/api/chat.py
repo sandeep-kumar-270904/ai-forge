@@ -1,7 +1,13 @@
-from fastapi import APIRouter, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, WebSocket, WebSocketDisconnect, Query, status
 import json
+from jose import jwt
+from pydantic import ValidationError
 from ..ai.agent import app as agent_app
 from langchain_core.messages import HumanMessage, AIMessage
+from ..core.config import settings
+from ..core.database import SessionLocal
+from ..models.user import User
+from ..models.workspace import Workspace
 
 router = APIRouter()
 
@@ -18,12 +24,47 @@ class ConnectionManager:
 
 manager = ConnectionManager()
 
-@router.websocket("/ws/{workspace_id}")
-async def websocket_endpoint(websocket: WebSocket, workspace_id: str):
-    await manager.connect(websocket)
-    messages = []
-    
+async def get_user_from_token(token: str, db):
     try:
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        token_data = payload.get("sub")
+        if token_data is None:
+            return None
+    except (jwt.JWTError, ValidationError):
+        return None
+    return db.query(User).filter(User.id == token_data).first()
+
+@router.websocket("/ws/{workspace_id}")
+async def websocket_endpoint(
+    websocket: WebSocket, 
+    workspace_id: str, 
+    token: str = Query(None)
+):
+    if not token:
+        await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+        return
+
+    db = SessionLocal()
+    try:
+        user = await get_user_from_token(token, db)
+        if not user or not user.is_active:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+        workspace = db.query(Workspace).filter(
+            Workspace.id == workspace_id, 
+            Workspace.tenant_id == user.tenant_id
+        ).first()
+        
+        if not workspace:
+            await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
+            return
+
+        await manager.connect(websocket)
+        messages = []
+        
         while True:
             data = await websocket.receive_text()
             payload = json.loads(data)
@@ -58,3 +99,5 @@ async def websocket_endpoint(websocket: WebSocket, workspace_id: str):
     except Exception as e:
         print(f"WebSocket error: {e}")
         manager.disconnect(websocket)
+    finally:
+        db.close()

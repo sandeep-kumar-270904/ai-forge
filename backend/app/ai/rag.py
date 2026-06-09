@@ -2,12 +2,15 @@ from langchain_openai import OpenAIEmbeddings
 from langchain_community.vectorstores import PGVector
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader, PyPDFLoader
-import tempfile
 import os
+import asyncio
 from ..core.config import settings
 
 def get_vectorstore(collection_name: str):
-    embeddings = OpenAIEmbeddings()
+    if not settings.OPENAI_API_KEY:
+        raise ValueError("OPENAI_API_KEY is missing from configuration")
+        
+    embeddings = OpenAIEmbeddings(openai_api_key=settings.OPENAI_API_KEY)
     vectorstore = PGVector(
         collection_name=collection_name,
         connection_string=settings.SQLALCHEMY_DATABASE_URI,
@@ -15,34 +18,36 @@ def get_vectorstore(collection_name: str):
     )
     return vectorstore
 
-def process_document(file_content: bytes, filename: str, collection_name: str):
-    # Save temporarily
+async def process_document(file_path: str, filename: str, collection_name: str):
     _, ext = os.path.splitext(filename)
-    with tempfile.NamedTemporaryFile(delete=False, suffix=ext) as temp_file:
-        temp_file.write(file_content)
-        temp_file_path = temp_file.name
-
-    try:
+    
+    def load_and_split():
         if ext.lower() == ".pdf":
-            loader = PyPDFLoader(temp_file_path)
+            loader = PyPDFLoader(file_path)
         else:
-            loader = TextLoader(temp_file_path)
+            loader = TextLoader(file_path)
             
         docs = loader.load()
-        
         text_splitter = RecursiveCharacterTextSplitter(
             chunk_size=1000,
             chunk_overlap=200
         )
-        splits = text_splitter.split_documents(docs)
+        return text_splitter.split_documents(docs)
         
+    splits = await asyncio.to_thread(load_and_split)
+    
+    def add_to_db():
         vectorstore = get_vectorstore(collection_name)
         vectorstore.add_documents(splits)
         return len(splits)
-    finally:
-        os.unlink(temp_file_path)
 
-def search_knowledge_base(query: str, collection_name: str, k: int = 4):
-    vectorstore = get_vectorstore(collection_name)
-    results = vectorstore.similarity_search(query, k=k)
+    chunks = await asyncio.to_thread(add_to_db)
+    return chunks
+
+async def search_knowledge_base(query: str, collection_name: str, k: int = 4):
+    def search():
+        vectorstore = get_vectorstore(collection_name)
+        return vectorstore.similarity_search(query, k=k)
+        
+    results = await asyncio.to_thread(search)
     return results

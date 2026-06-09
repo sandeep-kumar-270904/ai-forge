@@ -10,9 +10,9 @@ class AgentState(TypedDict):
     messages: Annotated[Sequence[BaseMessage], operator.add]
     workspace_id: str
 
-def knowledge_base_tool(query: str, workspace_id: str) -> str:
+async def knowledge_base_tool(query: str, workspace_id: str) -> str:
     """Search the workspace knowledge base for relevant information."""
-    results = search_knowledge_base(query, f"workspace_{workspace_id}", k=3)
+    results = await search_knowledge_base(query, f"workspace_{workspace_id}", k=3)
     if not results:
         return "No relevant information found in the knowledge base."
     return "\n\n".join([doc.page_content for doc in results])
@@ -54,7 +54,7 @@ async def execute_tools(state: AgentState):
     for tool_call in tool_calls:
         if tool_call["name"] == "knowledge_base_search":
             query = tool_call["args"]["query"]
-            result = knowledge_base_tool(query, state["workspace_id"])
+            result = await knowledge_base_tool(query, state["workspace_id"])
             tool_responses.append(
                 ToolMessage(content=result, name=tool_call["name"], tool_call_id=tool_call["id"])
             )

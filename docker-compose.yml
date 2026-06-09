@@ -27,8 +27,9 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - DATABASE_URL=postgresql+psycopg2://aiforge_user:aiforge_password@db:5432/aiforge_db
+      - SQLALCHEMY_DATABASE_URI=postgresql+psycopg2://aiforge_user:aiforge_password@db:5432/aiforge_db
       - REDIS_URL=redis://redis:6379/0
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
     depends_on:
       - db
       - redis
