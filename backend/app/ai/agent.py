@@ -39,8 +39,20 @@ tools = [
 
 model = ChatOpenAI(model="gpt-4o-mini").bind_tools(tools)
 
+from langchain_core.messages import SystemMessage
+
 async def call_model(state: AgentState):
-    messages = state["messages"]
+    messages = list(state["messages"])
+    
+    system_prompt = SystemMessage(content="""You are the AIForge specialized agent.
+You have access to a knowledge_base_search tool.
+CRITICAL RULE: If the user asks a question about their data, you MUST use the tool. 
+CRITICAL RULE: If the tool returns 'No relevant information found', you MUST reply EXACTLY with: 'I don't have enough information to answer that based on the current workspace context.' Do NOT hallucinate answers outside of the provided context.
+""")
+    
+    if not any(isinstance(msg, SystemMessage) for msg in messages):
+        messages.insert(0, system_prompt)
+        
     response = await model.ainvoke(messages)
     return {"messages": [response]}
 

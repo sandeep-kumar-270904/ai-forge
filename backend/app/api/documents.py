@@ -1,23 +1,26 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
-from sqlalchemy.orm import Session
-from ..api.deps import SessionDep, get_current_active_user
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+from ..api.deps import get_db, get_current_active_user
 from ..models.user import User
 from ..models.workspace import Workspace
 from ..ai.rag import process_document, search_knowledge_base
+from fastapi_limiter.depends import RateLimiter
 import tempfile
 import shutil
 import os
 
 router = APIRouter()
 
-@router.post("/upload")
+@router.post("/upload", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def upload_document(
     workspace_id: str,
     file: UploadFile = File(...),
     current_user: User = Depends(get_current_active_user),
-    db: SessionDep = Depends()
+    db: AsyncSession = Depends(get_db)
 ):
-    workspace = db.query(Workspace).filter(Workspace.id == workspace_id, Workspace.tenant_id == current_user.tenant_id).first()
+    result = await db.execute(select(Workspace).filter(Workspace.id == workspace_id, Workspace.tenant_id == current_user.tenant_id))
+    workspace = result.scalars().first()
     if not workspace:
          raise HTTPException(status_code=403, detail="Not enough permissions to access this workspace")
 
@@ -41,14 +44,15 @@ async def upload_document(
         if 'temp_file_path' in locals() and os.path.exists(temp_file_path):
             os.unlink(temp_file_path)
 
-@router.get("/search")
+@router.get("/search", dependencies=[Depends(RateLimiter(times=20, seconds=60))])
 async def search_documents(
     workspace_id: str,
     query: str,
     current_user: User = Depends(get_current_active_user),
-    db: SessionDep = Depends()
+    db: AsyncSession = Depends(get_db)
 ):
-    workspace = db.query(Workspace).filter(Workspace.id == workspace_id, Workspace.tenant_id == current_user.tenant_id).first()
+    result = await db.execute(select(Workspace).filter(Workspace.id == workspace_id, Workspace.tenant_id == current_user.tenant_id))
+    workspace = result.scalars().first()
     if not workspace:
          raise HTTPException(status_code=403, detail="Not enough permissions to access this workspace")
 

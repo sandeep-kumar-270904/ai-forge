@@ -1,30 +1,26 @@
-from typing import Generator, Annotated
+from typing import AsyncGenerator
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import jwt
 from pydantic import ValidationError
-from sqlalchemy.orm import Session
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.future import select
+
 from ..core import security
 from ..core.config import settings
 from ..core.database import SessionLocal
 from ..models.user import User
 
-reusable_oauth2 = OAuth2PasswordBearer(
-    tokenUrl=f"{settings.API_V1_STR}/auth/login"
-)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
-def get_db() -> Generator:
-    try:
-        db = SessionLocal()
-        yield db
-    finally:
-        db.close()
+async def get_db() -> AsyncGenerator[AsyncSession, None]:
+    async with SessionLocal() as session:
+        yield session
 
-SessionDep = Annotated[Session, Depends(get_db)]
-TokenDep = Annotated[str, Depends(reusable_oauth2)]
+SessionDep = AsyncSession
 
-def get_current_user(
-    db: SessionDep, token: TokenDep
+async def get_current_user(
+    db: AsyncSession = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> User:
     try:
         payload = jwt.decode(
@@ -41,23 +37,15 @@ def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    user = db.query(User).filter(User.id == token_data).first()
+    result = await db.execute(select(User).filter(User.id == token_data))
+    user = result.scalars().first()
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user
 
-def get_current_active_user(
-    current_user: Annotated[User, Depends(get_current_user)],
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
-    return current_user
-
-def get_current_admin_user(
-    current_user: Annotated[User, Depends(get_current_active_user)],
-) -> User:
-    if current_user.role != "admin":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
-        )
     return current_user
