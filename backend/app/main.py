@@ -3,8 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
-from .api import auth, documents, chat
+from .api import auth, documents, chat, gateway
 from .core.config import settings
+from .core.database import Base, engine
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -17,7 +18,8 @@ app = FastAPI(title="AIForge API", version="1.0.0", root_path="/api", lifespan=l
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(documents.router, prefix="/documents", tags=["documents"])
-app.include_router(chat.router, prefix="/chat", tags=["chat"])
+app.include_router(chat.router, prefix="/api/v1/chat", tags=["chat"])
+app.include_router(gateway.router, prefix="/api/v1/gateway", tags=["gateway"])
 
 app.add_middleware(
     CORSMiddleware,
