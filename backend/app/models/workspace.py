@@ -8,7 +8,7 @@ class Workspace(Base):
     __tablename__ = "workspaces"
 
     id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()), index=True)
-    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False)
+    tenant_id = Column(String, ForeignKey("tenants.id"), nullable=False, index=True)
     name = Column(String, nullable=False)
     description = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)

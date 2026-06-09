@@ -25,7 +25,7 @@ export default function LoginPage() {
       formData.append('username', email);
       formData.append('password', password);
 
-      const response = await fetchAPI('/auth/login', {
+      const data = await fetchAPI('/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
@@ -33,14 +33,10 @@ export default function LoginPage() {
         body: formData.toString(),
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('token', data.access_token);
-        document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
-        router.push('/dashboard');
-      } else {
-        throw new Error('Login failed');
-      }
+      localStorage.setItem('token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+      document.cookie = `token=${data.access_token}; path=/; max-age=86400; SameSite=Lax`;
+      router.push('/dashboard');
     } catch (err: any) {
       setError(err.message || 'Login failed');
     } finally {

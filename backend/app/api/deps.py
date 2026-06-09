@@ -10,6 +10,7 @@ from ..core import security
 from ..core.config import settings
 from ..core.database import SessionLocal
 from ..models.user import User
+from ..crud.crud_user import user as crud_user
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 
@@ -37,8 +38,7 @@ async def get_current_user(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
-    result = await db.execute(select(User).filter(User.id == token_data))
-    user = result.scalars().first()
+    user = await crud_user.get(db, id=token_data)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
     return user

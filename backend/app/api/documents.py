@@ -4,6 +4,7 @@ from sqlalchemy.future import select
 from ..api.deps import get_db, get_current_active_user
 from ..models.user import User
 from ..models.workspace import Workspace
+from ..crud.crud_workspace import workspace as crud_workspace
 from ..ai.rag import process_document, search_knowledge_base
 from fastapi_limiter.depends import RateLimiter
 import tempfile

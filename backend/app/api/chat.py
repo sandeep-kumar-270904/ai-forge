@@ -10,6 +10,8 @@ from ..core.config import settings
 from ..core.database import SessionLocal
 from ..models.user import User
 from ..models.workspace import Workspace
+from ..crud.crud_user import user as crud_user
+from ..crud.crud_workspace import workspace as crud_workspace
 
 router = APIRouter()
 
@@ -36,8 +38,7 @@ async def get_user_from_token(token: str, db: AsyncSession):
             return None
     except (jwt.JWTError, ValidationError):
         return None
-    result = await db.execute(select(User).filter(User.id == token_data))
-    return result.scalars().first()
+    return await crud_user.get(db, id=token_data)
 
 @router.websocket("/ws/{workspace_id}")
 async def websocket_endpoint(
@@ -55,11 +56,7 @@ async def websocket_endpoint(
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
             return
 
-        result = await db.execute(select(Workspace).filter(
-            Workspace.id == workspace_id, 
-            Workspace.tenant_id == user.tenant_id
-        ))
-        workspace = result.scalars().first()
+        workspace = await crud_workspace.get_by_id_and_tenant(db, workspace_id=workspace_id, tenant_id=user.tenant_id)
         
         if not workspace:
             await websocket.close(code=status.WS_1008_POLICY_VIOLATION)
