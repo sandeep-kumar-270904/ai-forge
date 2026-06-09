@@ -1,10 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from .api import auth
+from .api import auth, documents
 
 app = FastAPI(title="AIForge API", version="1.0.0", root_path="/api")
 
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
+app.include_router(documents.router, prefix="/documents", tags=["documents"])
 
 app.add_middleware(
     CORSMiddleware,
