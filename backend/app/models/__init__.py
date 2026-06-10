@@ -3,3 +3,4 @@ from .tenant import Tenant
 from .user import User
 from .workspace import Workspace
 from .token_usage import TokenUsageLog
+from .prompt import Prompt, PromptVersion, PromptDeployment
