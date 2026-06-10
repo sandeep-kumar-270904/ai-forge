@@ -6,3 +6,4 @@ from .token_usage import TokenUsageLog
 from .prompt import Prompt, PromptVersion, PromptDeployment
 from .observability import AgentRun, AgentSpan
 from .replay import ReplaySession
+from .evaluation import Dataset, DatasetRow, EvaluationRun, EvaluationResult
