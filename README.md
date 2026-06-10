@@ -4,63 +4,6 @@
 
 This document serves as the master engineering reference for the AIForge platform. It is written for Principal Engineers, DevOps Architects, and Security Officers assuming ownership of the system. 
 
-## Documentation Index
-
-The AIForge documentation is structured for scale. All engineering, operational, and security decisions are strictly documented.
-
-### 🏛️ Architecture & Design
-*   [High Level Design (HLD)](docs/architecture/HLD.md)
-*   [Low Level Design (LLD)](docs/architecture/LLD.md)
-*   [System Design & Scalability](docs/architecture/SYSTEM_DESIGN.md)
-*   [Component Diagrams](docs/architecture/COMPONENT_DIAGRAMS.md)
-*   [Sequence Diagrams](docs/architecture/SEQUENCE_DIAGRAMS.md)
-*   [Data Flow](docs/architecture/DATA_FLOW.md)
-*   [C4 Model Diagrams](docs/architecture/C4_MODEL.md)
-
-### 🔌 API & Integration
-*   [API Reference](docs/api/API_REFERENCE.md)
-*   [Authentication](docs/api/AUTHENTICATION.md)
-*   [Authorization & RBAC](docs/api/AUTHORIZATION.md)
-
-### 💾 Database
-*   [Database Design](docs/database/DATABASE_DESIGN.md)
-*   [Entity Relationship (ER) Diagram](docs/database/ER_DIAGRAM.md)
-*   [Data Lifecycle & Pruning](docs/database/DATA_LIFECYCLE.md)
-
-### 🔒 Security
-*   [Security Architecture](docs/security/SECURITY_ARCHITECTURE.md)
-*   [Threat Model](docs/security/THREAT_MODEL.md)
-*   [Secrets Management](docs/security/SECRETS_MANAGEMENT.md)
-
-### 🧠 AI Systems
-*   [Agent Architecture](docs/ai/AGENT_ARCHITECTURE.md)
-*   [Prompt Architecture](docs/ai/PROMPT_ARCHITECTURE.md)
-*   [Memory Architecture](docs/ai/MEMORY_ARCHITECTURE.md)
-*   [Tool Calling Execution](docs/ai/TOOL_CALLING.md)
-*   [Evaluation Framework](docs/ai/EVALUATION_FRAMEWORK.md)
-
-### 🚀 Deployment
-*   [Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md)
-*   [Infrastructure Specifications](docs/deployment/INFRASTRUCTURE.md)
-*   [CI/CD Pipelines](docs/deployment/CI_CD.md)
-*   [Environment Promotion](docs/deployment/ENVIRONMENTS.md)
-
-### 🛠️ Operations
-*   [SRE Runbooks](docs/operations/RUNBOOKS.md)
-*   [Incident Response](docs/operations/INCIDENT_RESPONSE.md)
-*   [Disaster Recovery](docs/operations/DISASTER_RECOVERY.md)
-*   [Observability & Alerts](docs/operations/OBSERVABILITY.md)
-
-### 📝 Product & Requirements
-*   [Business Rules](docs/product/BUSINESS_RULES.md)
-*   [System Requirements](docs/product/REQUIREMENTS.md)
-
-### 📐 Architecture Decision Records (ADR)
-*   [ADR-001: Async PostgreSQL](docs/adr/ADR-001.md)
-*   [ADR-002: LangGraph Orchestration](docs/adr/ADR-002.md)
-*   [ADR-003: Redis Caching](docs/adr/ADR-003.md)
-
----
 
 ## 1. Executive Summary
 
@@ -263,21 +206,61 @@ erDiagram
 
 ---
 
-## 9. API Documentation
+## 9. Comprehensive Documentation Suite
 
-### Example: Resolve HITL Ticket
-*   **Method:** `POST`
-*   **Route:** `/api/v1/hitl/tickets/{ticket_id}/resolve`
-*   **Description:** Approves/rejects a paused graph and resumes execution.
-*   **Request Body:**
-    ```json
-    { "decision": "approved", "state_overrides": { "email_body": "fixed typo" } }
-    ```
-*   **Response (200 OK):**
-    ```json
-    { "id": "uuid", "status": "approved", "resolution_payload": { ... } }
-    ```
-*   **Authentication:** JWT Bearer (Required Role: Approver).
+The AIForge documentation is structured for scale. All engineering, operational, and security decisions are strictly documented within the `/docs` directory.
+
+### 🏛️ Architecture & Design
+*   [High Level Design (HLD)](docs/architecture/HLD.md)
+*   [Low Level Design (LLD)](docs/architecture/LLD.md)
+*   [System Design & Scalability](docs/architecture/SYSTEM_DESIGN.md)
+*   [Component Diagrams](docs/architecture/COMPONENT_DIAGRAMS.md)
+*   [Sequence Diagrams](docs/architecture/SEQUENCE_DIAGRAMS.md)
+*   [Data Flow](docs/architecture/DATA_FLOW.md)
+*   [C4 Model Diagrams](docs/architecture/C4_MODEL.md)
+
+### 🔌 API & Integration
+*   [API Reference](docs/api/API_REFERENCE.md)
+*   [Authentication](docs/api/AUTHENTICATION.md)
+*   [Authorization & RBAC](docs/api/AUTHORIZATION.md)
+
+### 💾 Database
+*   [Database Design](docs/database/DATABASE_DESIGN.md)
+*   [Entity Relationship (ER) Diagram](docs/database/ER_DIAGRAM.md)
+*   [Data Lifecycle & Pruning](docs/database/DATA_LIFECYCLE.md)
+
+### 🔒 Security
+*   [Security Architecture](docs/security/SECURITY_ARCHITECTURE.md)
+*   [Threat Model](docs/security/THREAT_MODEL.md)
+*   [Secrets Management](docs/security/SECRETS_MANAGEMENT.md)
+
+### 🧠 AI Systems
+*   [Agent Architecture](docs/ai/AGENT_ARCHITECTURE.md)
+*   [Prompt Architecture](docs/ai/PROMPT_ARCHITECTURE.md)
+*   [Memory Architecture](docs/ai/MEMORY_ARCHITECTURE.md)
+*   [Tool Calling Execution](docs/ai/TOOL_CALLING.md)
+*   [Evaluation Framework](docs/ai/EVALUATION_FRAMEWORK.md)
+
+### 🚀 Deployment
+*   [Deployment Guide](docs/deployment/DEPLOYMENT_GUIDE.md)
+*   [Infrastructure Specifications](docs/deployment/INFRASTRUCTURE.md)
+*   [CI/CD Pipelines](docs/deployment/CI_CD.md)
+*   [Environment Promotion](docs/deployment/ENVIRONMENTS.md)
+
+### 🛠️ Operations
+*   [SRE Runbooks](docs/operations/RUNBOOKS.md)
+*   [Incident Response](docs/operations/INCIDENT_RESPONSE.md)
+*   [Disaster Recovery](docs/operations/DISASTER_RECOVERY.md)
+*   [Observability & Alerts](docs/operations/OBSERVABILITY.md)
+
+### 📝 Product & Requirements
+*   [Business Rules](docs/product/BUSINESS_RULES.md)
+*   [System Requirements](docs/product/REQUIREMENTS.md)
+
+### 📐 Architecture Decision Records (ADR)
+*   [ADR-001: Async PostgreSQL](docs/adr/ADR-001.md)
+*   [ADR-002: LangGraph Orchestration](docs/adr/ADR-002.md)
+*   [ADR-003: Redis Caching](docs/adr/ADR-003.md)
 
 ---
 
