@@ -6,3 +6,4 @@ from .crud_observability import run as agent_run, span as agent_span
 from .crud_replay import replay_session
 from .crud_evaluation import dataset, dataset_row, evaluation_run, evaluation_result
 from .crud_hitl import approval_ticket
+from .crud_swarms import swarm_agent, swarm

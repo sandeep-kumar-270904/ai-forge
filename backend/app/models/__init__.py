@@ -8,3 +8,4 @@ from .observability import AgentRun, AgentSpan
 from .replay import ReplaySession
 from .evaluation import Dataset, DatasetRow, EvaluationRun, EvaluationResult
 from .hitl import ApprovalTicket
+from .swarms import SwarmAgentPersona, Swarm, swarm_agents_association

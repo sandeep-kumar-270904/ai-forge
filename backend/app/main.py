@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import redis.asyncio as redis
 from fastapi_limiter import FastAPILimiter
-from .api import auth, documents, chat, gateway, prompts, observability, replay, evaluation, hitl
+from .api import auth, documents, chat, gateway, prompts, observability, replay, evaluation, hitl, swarms
 from .core.config import settings
 from .core.database import Base, engine
 
@@ -25,6 +25,7 @@ app.include_router(observability.router, prefix="/api/v1/observability", tags=["
 app.include_router(replay.router, prefix="/api/v1/replay", tags=["replay"])
 app.include_router(evaluation.router, prefix="/api/v1/evaluations", tags=["evaluations"])
 app.include_router(hitl.router, prefix="/api/v1/hitl", tags=["hitl"])
+app.include_router(swarms.router, prefix="/api/v1/swarms", tags=["swarms"])
 
 app.add_middleware(
     CORSMiddleware,
