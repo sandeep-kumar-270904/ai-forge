@@ -1,32 +1,72 @@
 from typing import TypedDict, Any, Dict
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, START, END
+from app.models.workflow import Workflow
 
-class WorkflowState(TypedDict):
-    inputs: Dict[str, Any]
-    outputs: Dict[str, Any]
-    current_node: str
+# A flexible state that can handle diverse inputs for the visual workflow
+class DynamicState(TypedDict):
+    input: str
+    output: str
+    scratchpad: dict
 
-async def execute_llm_node(state: WorkflowState):
-    prompt = state["inputs"].get("prompt", "Hello")
-    state["outputs"]["llm_response"] = f"Processed via LLM Node: {prompt}"
-    return state
+class DynamicWorkflowEngine:
+    """
+    Takes a database-driven DAG (Workflow, Nodes, Edges) and compiles it into
+    an executable LangGraph StateGraph on the fly.
+    """
+    
+    def __init__(self, workflow: Workflow):
+        self.workflow = workflow
+        self.builder = StateGraph(DynamicState)
+        self._compile()
 
-async def execute_api_node(state: WorkflowState):
-    url = state["inputs"].get("url", "https://api.example.com")
-    state["outputs"]["api_response"] = f"Fetched data from {url}"
-    return state
+    def _compile(self):
+        # ---------------------------------------------------------
+        # Node Execution Factories
+        # ---------------------------------------------------------
+        def create_llm_node(config):
+            async def llm_step(state: DynamicState):
+                # In production, this would invoke LangChain chat models
+                # Here we simulate the dynamic execution using the config
+                prompt = config.get("prompt", "Default instruction")
+                return {"output": f"LLM executed [{prompt}] against input: {state.get('input')}"}
+            return llm_step
 
-def route_next(state: WorkflowState):
-    if state["current_node"] == "llm":
-        return "api"
-    return "end"
+        def create_tool_node(config):
+            async def tool_step(state: DynamicState):
+                tool_name = config.get("tool_name", "unknown_tool")
+                return {"scratchpad": {"last_tool": tool_name, "status": "success"}}
+            return tool_step
 
-workflow = StateGraph(WorkflowState)
-workflow.add_node("llm", execute_llm_node)
-workflow.add_node("api", execute_api_node)
+        # 1. Add Nodes to LangGraph
+        for node in self.workflow.nodes:
+            if node.node_type == "llm":
+                self.builder.add_node(node.id, create_llm_node(node.config or {}))
+            elif node.node_type == "tool":
+                self.builder.add_node(node.id, create_tool_node(node.config or {}))
+            # '__start__' and '__end__' are reserved by LangGraph so they aren't added as explicit nodes
 
-workflow.set_entry_point("llm")
-workflow.add_conditional_edges("llm", route_next, {"api": "api", "end": END})
-workflow.add_edge("api", END)
+        # 2. Add Edges to LangGraph
+        for edge in self.workflow.edges:
+            source = START if edge.source_node_id == "__start__" else edge.source_node_id
+            target = END if edge.target_node_id == "__end__" else edge.target_node_id
+            
+            if edge.condition_type == "always" or not edge.condition_type:
+                self.builder.add_edge(source, target)
+            elif edge.condition_type == "conditional":
+                # In a real implementation, this router would evaluate a JSONata/JMESPath
+                # expression from edge.condition_config against the `state`
+                def route_condition(state: DynamicState):
+                    return target 
+                
+                self.builder.add_conditional_edges(
+                    source,
+                    route_condition,
+                    {target: target} # routing map
+                )
+        
+        # 3. Compile the graph
+        self.graph = self.builder.compile()
 
-workflow_app = workflow.compile()
+    async def invoke(self, state: Dict[str, Any]) -> Dict[str, Any]:
+        """Runs the compiled graph asynchronously"""
+        return await self.graph.ainvoke(state)
