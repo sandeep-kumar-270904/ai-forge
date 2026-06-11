@@ -6,12 +6,21 @@ from fastapi_limiter import FastAPILimiter
 from .api import auth, documents, chat, gateway, prompts, observability, replay, evaluation, hitl, swarms, knowledge, workflows
 from .core.config import settings
 from .core.database import Base, engine
+from .core.scheduler import start_scheduler, shutdown_scheduler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    redis_conn = redis.from_url(settings.REDIS_URL, encoding="utf-8", decode_responses=True)
+    # Initialize Redis for rate limiting
+    redis_conn = redis.from_url(settings.REDIS_URL, encoding="utf8", decode_responses=True)
     await FastAPILimiter.init(redis_conn)
+    
+    # Start background cron jobs
+    start_scheduler()
+    
     yield
+    
+    # Shutdown gracefully
+    shutdown_scheduler()
     await redis_conn.close()
 
 app = FastAPI(title="AIForge API", version="1.0.0", root_path="/api", lifespan=lifespan)

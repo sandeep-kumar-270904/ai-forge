@@ -9,6 +9,7 @@ from app.models.user import User
 from app.schemas.workflow import WorkflowCreate, WorkflowRead, WorkflowInvokeRequest
 from app.crud.crud_workflow import crud_workflow
 from app.ai.workflow_engine import DynamicWorkflowEngine
+from fastapi_limiter.depends import RateLimiter
 
 router = APIRouter()
 
@@ -41,7 +42,7 @@ async def get_workflow(
         raise HTTPException(status_code=404, detail="Workflow not found")
     return workflow
 
-@router.post("/{workflow_id}/invoke")
+@router.post("/{workflow_id}/invoke", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def invoke_workflow(
     workflow_id: UUID,
     payload: WorkflowInvokeRequest,

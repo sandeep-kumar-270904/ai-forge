@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+from fastapi_limiter.depends import RateLimiter
 
 from app.core.database import get_db
 from app.core.security import get_current_user
@@ -12,7 +13,7 @@ from app.ai.rag.loader import extract_text_from_pdf, chunk_text, generate_embedd
 
 router = APIRouter()
 
-@router.post("/upload", response_model=DocumentRead)
+@router.post("/upload", response_model=DocumentRead, dependencies=[Depends(RateLimiter(times=5, seconds=60))])
 async def upload_document(
     file: UploadFile = File(...),
     db: AsyncSession = Depends(get_db),
@@ -66,7 +67,7 @@ async def upload_document(
         await knowledge.update_document_status(db, doc.id, "failed")
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.post("/search", response_model=List[SearchResult])
+@router.post("/search", response_model=List[SearchResult], dependencies=[Depends(RateLimiter(times=20, seconds=60))])
 async def search_knowledge_base(
     payload: SearchQuery,
     db: AsyncSession = Depends(get_db),

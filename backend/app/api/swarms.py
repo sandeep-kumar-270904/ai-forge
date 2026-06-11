@@ -6,6 +6,7 @@ from ..models.user import User
 from ..schemas.swarms import SwarmCreate, SwarmResponse, SwarmAgentPersonaCreate, SwarmAgentPersonaResponse, SwarmInvokeRequest
 from ..crud.crud_swarms import swarm, swarm_agent
 from ..ai.swarms.executor import SwarmExecutor
+from fastapi_limiter.depends import RateLimiter
 
 router = APIRouter()
 
@@ -39,7 +40,7 @@ async def list_swarms(
 ):
     return await swarm.get_by_tenant(db, tenant_id=current_user.tenant_id)
 
-@router.post("/{swarm_id}/invoke")
+@router.post("/{swarm_id}/invoke", dependencies=[Depends(RateLimiter(times=10, seconds=60))])
 async def invoke_swarm(
     swarm_id: str,
     request: SwarmInvokeRequest,
